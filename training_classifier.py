@@ -511,7 +511,7 @@ def main():
 
     # If True, reruns SFS subset-size test, which takes long time.
     # If False, loads previous results from CSV.
-    run_sfs_subset_test = False
+    run_sfs_subset_test = True
     subset_results_csv = "sfs_subset_size_results.csv"
 
     # Load and prepare training data
@@ -605,6 +605,7 @@ def main():
         cv_splits=cv_splits,
         n_features_to_select=5
     )
+    #X_selected = X[['Maximum_Velocity_Bandwidth', 'Active_Motion_Fraction', 'Energy_Weighted_Velocity', 'Skewness_Doppler_Distr', 'Total_Signal_Over_Max']]
 
     X_selected = X[selected_features]
 
