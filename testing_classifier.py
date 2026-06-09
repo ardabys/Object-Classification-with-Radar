@@ -8,11 +8,12 @@ training configuration JSON unless these values are passed directly.
 
 from __future__ import annotations
 
-import argparse
 import json
 from pathlib import Path
 from typing import Any
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import (
@@ -42,6 +43,14 @@ def split_data(
     y = df[label_col]
     return X, y
 
+def ensure_parent_dir(path: str | Path) -> None:
+    """
+    Create the parent directory of a file path if it does not exist.
+    """
+    path = Path(path)
+
+    if path.parent != Path("."):
+        path.parent.mkdir(parents=True, exist_ok=True)
 
 def check_selected_features_exist(df: pd.DataFrame, selected_features: list[str]) -> None:
     """Check that all selected features exist in the dataframe."""
@@ -52,7 +61,6 @@ def check_selected_features_exist(df: pd.DataFrame, selected_features: list[str]
             "The following selected features are missing from the dataset:\n"
             + "\n".join(missing_features)
         )
-
 
 def load_training_config(config_path: str | Path) -> dict[str, Any]:
     """Load selected features and best hyperparameters saved by training."""
@@ -117,6 +125,7 @@ def plot_and_save_confusion_matrix(
     disp.plot()
     plt.title("Confusion Matrix - Unseen Test Set")
     plt.tight_layout()
+    ensure_parent_dir(save_path)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     print(f"\nConfusion matrix saved to: {save_path}")
 
@@ -200,30 +209,18 @@ def run_testing_pipeline(
     }
 
 
-def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Evaluate radar activity SVM classifier.")
-    parser.add_argument("--training_csv", default="data/training_features.csv")
-    parser.add_argument("--testing_csv", default="data/testing_features.csv")
-    parser.add_argument("--config", default="data/trained_classifier_config.json")
-    parser.add_argument("--file_col", default="File")
-    parser.add_argument("--label_col", default="Activity")
-    parser.add_argument("--confusion_matrix", default="figures/test_confusion_matrix.png")
-    parser.add_argument("--show_plots", action="store_true")
-    return parser
 
-
-def main() -> dict[str, Any]:
-    args = build_arg_parser().parse_args()
-    return run_testing_pipeline(
-        training_csv_path=args.training_csv,
-        testing_csv_path=args.testing_csv,
-        config_path=args.config,
-        file_col=args.file_col,
-        label_col=args.label_col,
-        confusion_matrix_save_path=args.confusion_matrix,
-        show_plots=args.show_plots,
-    )
-
-
+# SCRIPT SETTINGS
 if __name__ == "__main__":
-    main()
+    run_testing_pipeline(
+        training_csv_path="data/training_features.csv",
+        testing_csv_path="data/testing_features.csv",
+        config_path="data/trained_classifier_config.json",
+        selected_features=None,
+        best_C=None,
+        best_gamma=None,
+        file_col="File",
+        label_col="Activity",
+        confusion_matrix_save_path="figures/test_confusion_matrix.png",
+        show_plots=False,
+    )

@@ -14,11 +14,12 @@ It performs:
 
 from __future__ import annotations
 
-import argparse
 import json
 from pathlib import Path
 from typing import Any
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.feature_selection import SequentialFeatureSelector
@@ -88,6 +89,15 @@ def print_dataset_overview(
     print("\nFeature columns:")
     for feature in feature_cols:
         print("-", feature)
+
+def ensure_parent_dir(path: str | Path) -> None:
+    """
+    Create the parent directory of a file path if it does not exist.
+    """
+    path = Path(path)
+
+    if path.parent != Path("."):
+        path.parent.mkdir(parents=True, exist_ok=True)
 
 
 # 2. CROSS-VALIDATION SETUP
@@ -457,6 +467,7 @@ def plot_cv_confusion_matrix(
     plt.tight_layout()
 
     if save_path is not None:
+        ensure_parent_dir(save_path)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         print(f"Confusion matrix saved to: {save_path}")
 
@@ -493,6 +504,7 @@ def plot_performance_vs_number_of_features(
     plt.tight_layout()
 
     if save_path is not None:
+        ensure_parent_dir(save_path)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         print(f"Performance plot saved to: {save_path}")
 
@@ -530,6 +542,7 @@ def save_training_config(
     }
 
     config_path = Path(config_path)
+    ensure_parent_dir(config_path)
     config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
     print(f"\nTraining configuration saved to: {config_path}")
 
@@ -544,6 +557,7 @@ def run_training_pipeline(
     n_splits: int = 5,
     run_sfs_subset_test: bool = True,
     subset_results_csv: str | Path = "data/sfs_subset_size_results.csv",
+    single_feature_results_csv: str | Path = "data/single_feature_results.csv",
     n_features_to_select: int | None = 5,
     auto_choose_k: bool = False,
     output_config_path: str | Path = "data/trained_classifier_config.json",
@@ -573,9 +587,20 @@ def run_training_pipeline(
 
     # 3. Test or load increasing number of selected features.
     subset_results_csv = Path(subset_results_csv)
-    if run_sfs_subset_test:
-        subset_results_df = test_increasing_number_of_features(X, y, feature_cols, cv_splits)
+    single_feature_results_csv = Path(single_feature_results_csv)
+
+    if run_sfs_subset_test or not subset_results_csv.exists():
+        if not subset_results_csv.exists():
+            print(f"\nSubset results file not found: {subset_results_csv}")
+            print("Running SFS subset-size test to create it.")
+
+        subset_results_df = test_increasing_number_of_features(
+            X, y, feature_cols, cv_splits
+        )
+
+        subset_results_csv.parent.mkdir(parents=True, exist_ok=True)
         subset_results_df.to_csv(subset_results_csv, index=False)
+
     else:
         subset_results_df = load_subset_size_results(subset_results_csv)
 
@@ -600,8 +625,11 @@ def run_training_pipeline(
     )
 
     # Save intermediate results.
-    subset_results_df.to_csv("data/sfs_subset_size_results.csv", index=False)
-    single_feature_results.to_csv("data/single_feature_results.csv", index=False)
+    subset_results_csv.parent.mkdir(parents=True, exist_ok=True)
+    subset_results_df.to_csv(subset_results_csv, index=False)
+
+    single_feature_results_csv.parent.mkdir(parents=True, exist_ok=True)
+    single_feature_results.to_csv(single_feature_results_csv, index=False)
 
     # 4. Choose number of features.
     if auto_choose_k:
@@ -622,7 +650,7 @@ def run_training_pipeline(
         cv_splits=cv_splits,
         n_features_to_select=n_features_to_select,
     )
-
+    selected_features = ['Maximum_Velocity_Bandwidth', 'Active_Motion_Fraction', 'Energy_Weighted_Velocity', 'Skewness_Doppler_Distr', 'Total_Signal_Over_Max']
     X_selected = X[selected_features]
 
     # 6. Hyperparameter tuning on selected features.
@@ -661,36 +689,18 @@ def run_training_pipeline(
     return config
 
 
-def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Train radar activity SVM classifier.")
-    parser.add_argument("--training_csv", default="data/training_features.csv")
-    parser.add_argument("--file_col", default="File")
-    parser.add_argument("--label_col", default="Activity")
-    parser.add_argument("--n_splits", type=int, default=5)
-    parser.add_argument("--n_features", type=int, default=5)
-    parser.add_argument("--auto_choose_k", action="store_true")
-    parser.add_argument("--skip_sfs_subset_test", action="store_true")
-    parser.add_argument("--subset_results_csv", default="data/sfs_subset_size_results.csv")
-    parser.add_argument("--output_config", default="data/trained_classifier_config.json")
-    parser.add_argument("--show_plots", action="store_true")
-    return parser
-
-
-def main() -> dict[str, Any]:
-    args = build_arg_parser().parse_args()
-    return run_training_pipeline(
-        training_csv_path=args.training_csv,
-        file_col=args.file_col,
-        label_col=args.label_col,
-        n_splits=args.n_splits,
-        run_sfs_subset_test=not args.skip_sfs_subset_test,
-        subset_results_csv=args.subset_results_csv,
-        n_features_to_select=args.n_features,
-        auto_choose_k=args.auto_choose_k,
-        output_config_path=args.output_config,
-        show_plots=args.show_plots,
-    )
-
-
+# SCRIPT SETTINGS
 if __name__ == "__main__":
-    main()
+    run_training_pipeline(
+        training_csv_path="data/training_features.csv",
+        file_col="File",
+        label_col="Activity",
+        n_splits=5,
+        run_sfs_subset_test=False,
+        subset_results_csv="data/sfs_subset_size_results.csv",
+        single_feature_results_csv="data/single_feature_results.csv",
+        n_features_to_select=5,
+        auto_choose_k=False,
+        output_config_path="data/trained_classifier_config.json",
+        show_plots=False,
+    )
