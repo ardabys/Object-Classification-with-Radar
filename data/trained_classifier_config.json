@@ -1,0 +1,16 @@
+{
+  "training_csv_path": "data\\training_features.csv",
+  "selected_features": [
+    "Maximum_Velocity_Bandwidth",
+    "Active_Motion_Fraction",
+    "Energy_Weighted_Velocity",
+    "Skewness_Doppler_Distr",
+    "Total_Signal_Over_Max"
+  ],
+  "n_features_to_select": 5,
+  "best_params": {
+    "C": 1,
+    "gamma": "scale"
+  },
+  "best_cv_macro_f1": 0.8940636252536027
+}
