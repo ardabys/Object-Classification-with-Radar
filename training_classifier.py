@@ -28,12 +28,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-
 # 1. DATA LOADING AND SPLITTING
 def load_training_data(csv_path: str | Path) -> pd.DataFrame:
     """Load the training feature CSV."""
     return pd.read_csv(csv_path)
-
 
 def split_features_labels_groups(
     df: pd.DataFrame,
@@ -67,7 +65,6 @@ def split_features_labels_groups(
             "Could not extract subject IDs from some filenames. "
             f"Examples: {bad_files}"
         )
-
     return X, y, groups, feature_cols
 
 
@@ -151,7 +148,6 @@ def evaluate_cv_scores(
 def print_cv_result(name: str, scores: Any) -> None:
     """Print mean and standard deviation of CV scores."""
     print(f"{name}: {scores.mean():.3f} ± {scores.std():.3f}")
-
 
 def evaluate_accuracy_and_macro_f1(
     model: Pipeline,
@@ -263,8 +259,7 @@ def test_increasing_number_of_features(
     cv_splits: list[tuple[Any, Any]],
 ) -> pd.DataFrame:
     """
-    Test SFS for k = 1, 2, ..., number of features - 1.
-    Then add the full feature set result separately.
+    Test SFS for increasing number of features.
     """
     print("\nTesting increasing number of selected features")
     print("----------------------------------------------")

@@ -26,7 +26,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-
 # 1. DATA LOADING
 def load_data(csv_path: str | Path) -> pd.DataFrame:
     """Load a feature CSV file."""

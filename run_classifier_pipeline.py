@@ -19,7 +19,6 @@ from pathlib import Path
 from training_classifier import run_training_pipeline
 from testing_classifier import run_testing_pipeline
 
-
 def run_full_pipeline(
     training_csv_path: str | Path = "data/training_features.csv",
     testing_csv_path: str | Path = "data/testing_features.csv",
@@ -83,7 +82,6 @@ def run_full_pipeline(
         "testing_results": testing_results,
     }
 
-
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run full radar activity classification pipeline.")
     parser.add_argument("--training_csv", default="data/training_features.csv")
@@ -99,7 +97,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--test_confusion_matrix", default="figures/test_confusion_matrix.png")
     parser.add_argument("--show_plots", action="store_true")
     return parser
-
 
 def main() -> dict:
     args = build_arg_parser().parse_args()
@@ -117,7 +114,6 @@ def main() -> dict:
         test_confusion_matrix_path=args.test_confusion_matrix,
         show_plots=args.show_plots,
     )
-
 
 if __name__ == "__main__":
     main()
